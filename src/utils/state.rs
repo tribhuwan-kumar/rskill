@@ -13,6 +13,9 @@ use crate::{AppStateArc, Status};
 pub enum Key {
     Up,
     Down,
+    J,
+    K,
+    Q,
     Enter,
     CtrlC,
 }
@@ -38,6 +41,27 @@ where
                     modifiers: KeyModifiers::NONE,
                     ..
                 }) => callback(Key::Down),
+
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('j'),
+                    kind: KeyEventKind::Press,
+                    modifiers: KeyModifiers::NONE,
+                    ..
+                }) => callback(Key::J),
+
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('k'),
+                    kind: KeyEventKind::Press,
+                    modifiers: KeyModifiers::NONE,
+                    ..
+                }) => callback(Key::K),
+
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('q'),
+                    kind: KeyEventKind::Press,
+                    modifiers: KeyModifiers::NONE,
+                    ..
+                }) => callback(Key::Q),
 
                 Event::Key(KeyEvent {
                     code: KeyCode::Enter,
@@ -114,12 +138,12 @@ pub fn list_state_listen(app_state: AppStateArc) -> JoinHandle<()> {
                                 app_state.lock().unwrap().status = Status::Deleting;
                             }
 
-                            if let Err(err) = std::fs::remove_dir_all(folder.path) {
-                                app_state.lock().unwrap().errors = Some(err.to_string());
-                            }
+                            // if let Err(err) = std::fs::remove_dir_all(folder.path) {
+                            //     app_state.lock().unwrap().status = Some(err.to_string());
+                            // }
 
                             let mut app_state_locked = app_state.lock().unwrap();
-                            app_state_locked.status = Status::Kmr;
+                            app_state_locked.status = Status::Normal;
                             app_state_locked.folders.remove(selected);
                         }
                     });
@@ -137,10 +161,10 @@ pub fn list_state_listen(app_state: AppStateArc) -> JoinHandle<()> {
 
     return thread_event_listen({
         move |event| match event {
-            Key::Down => move_list(Dir::Down),
-            Key::Up => move_list(Dir::Up),
+            Key::Down | Key::J => move_list(Dir::Down),
+            Key::Up | Key::K => move_list(Dir::Up),
             Key::Enter => on_enter(),
-            Key::CtrlC => on_ctrl_c(),
+            Key::CtrlC | Key::Q => on_ctrl_c(),
         }
     });
 }

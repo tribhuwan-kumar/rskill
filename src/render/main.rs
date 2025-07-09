@@ -66,14 +66,15 @@ where
 
         let text_layout = text_layout[0];
 
-        let branding = Paragraph::new("npkill-rs 🦀")
+        let branding = Paragraph::new("rskill")
             .style(Style::default().add_modifier(Modifier::BOLD))
             .alignment(Alignment::Center);
 
         let status_text = "status: ".to_string();
         let status_text = match self.app_state.status {
-            Status::Kmr => status_text + " kmr 🇱🇹 (chilling)",
-            Status::Deleting => status_text + " deleting files, wait!",
+            Status::Normal => status_text + " normal ",
+            Status::Deleting => status_text + " deleting files, wait!! ",
+            Status::Error => todo!()
         };
 
         let status = Paragraph::new(status_text).alignment(Alignment::Left);
@@ -81,18 +82,6 @@ where
         self.frame.render_widget(container, area);
         self.frame.render_widget(status, text_layout);
         self.frame.render_widget(branding, text_layout);
-    }
-
-    pub fn render_errors(&mut self) {
-        let area = self.global_layout.errors;
-        let container = Block::default().borders(Borders::all()).title("Errors");
-
-        let errors = self.app_state.errors.as_ref();
-        let paragraph = Paragraph::new(errors.map(|x| x.to_string()).unwrap_or("Ok".to_string()))
-            .block(container)
-            .wrap(Wrap { trim: true });
-
-        self.frame.render_widget(paragraph, area);
     }
 
     pub fn render_list(&mut self) {

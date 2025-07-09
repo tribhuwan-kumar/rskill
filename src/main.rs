@@ -22,8 +22,9 @@ use utils::{
 
 #[derive(Debug, Clone)]
 pub enum Status {
-    Kmr,
+    Normal,
     Deleting,
+    Error,
 }
 
 #[derive(Debug, Clone)]
@@ -31,7 +32,6 @@ pub struct AppState {
     pub folders: Vec<Folder>,
     pub list_state: ListState,
     pub status: Status,
-    pub errors: Option<String>,
 }
 
 impl AppState {
@@ -53,19 +53,29 @@ fn main() -> Result<()> {
 
     let spinner = Spinner::new(
         spinners::Dots,
-        "Recursively searching for `target` folders",
+        "recursively searching for 'target' directories",
         spinoff::Color::White,
     );
 
+    let mut default_ignored_folders = vec![".git"];
+    if cfg!(windows) {
+        default_ignored_folders.extend(&["Windows", "Program Files", "Program Files (x86)"]);
+    } else if cfg!(unix) {
+        default_ignored_folders.extend(&["bin", "boot", "dev", "etc", "lib", "proc", "sys", "usr"]);
+    }
+
+    let all_ignored_folders: Vec<&str> = default_ignored_folders
+        .into_iter()
+        .collect();
+
     let app_state = Arc::new(Mutex::new(AppState {
-        folders: find_target_folders(".", "target"),
+        folders: find_target_folders(".", "target", &all_ignored_folders),
         list_state: {
             let mut list_state = ListState::default();
             list_state.select(Some(0));
             list_state
         },
-        status: Status::Kmr,
-        errors: None,
+        status: Status::Normal,
     }));
 
     spinner.stop();
@@ -81,7 +91,7 @@ fn main() -> Result<()> {
             terminal.clear()?;
             disable_raw_mode()?;
 
-            println!("No node_modules left, the 🦀 did its job");
+            println!("No 'target' left, the rskill did its job");
             return Ok(());
         }
 
@@ -90,7 +100,6 @@ fn main() -> Result<()> {
             let mut app_renderer = AppRenderer::new(frame, app_state);
 
             app_renderer.render_header();
-            app_renderer.render_errors();
             app_renderer.render_list();
         })?;
 

@@ -11,10 +11,16 @@ pub struct Folder {
     pub deleting: bool,
 }
 
-pub fn find_target_folders(start_path: &str, target_folder: &str) -> Vec<Folder> {
-    fn traverse(path: &str, target_folder: &str, folders: &mut Vec<Folder>, count: usize) {
-        // normalizing path because windows *sigh*
-        if path.replace('\\', "/").split('/').last().unwrap() == target_folder {
+pub fn find_target_folders(start_path: &str, target_folder: &str, ignored_folders: &[&str],) -> Vec<Folder> {
+    fn traverse(path: &str, target_folder: &str, folders: &mut Vec<Folder>, ignored_folders: &[&str], count: usize) {
+        let normalized_path = path.replace('\\', "/");
+        let folder_name = normalized_path.split('/').last().unwrap();
+
+        if ignored_folders.contains(&folder_name) {
+            return;
+        }
+
+        if folder_name == target_folder {
             folders.push(Folder {
                 path: path.to_string(),
                 size: calculate_folder_size(path).ok(),
@@ -35,7 +41,7 @@ pub fn find_target_folders(start_path: &str, target_folder: &str) -> Vec<Folder>
                 for dir in read_dir {
                     let child = dir.unwrap().path();
                     let child = child.to_str().unwrap();
-                    traverse(child, target_folder, folders, count + 1);
+                    traverse(child, target_folder, folders, ignored_folders, count + 1);
                 }
             }
         }
@@ -43,7 +49,7 @@ pub fn find_target_folders(start_path: &str, target_folder: &str) -> Vec<Folder>
 
     let mut folders = vec![];
 
-    traverse(start_path, target_folder, &mut folders, 0);
+    traverse(start_path, target_folder, &mut folders, ignored_folders, 0);
 
     return folders;
 }
