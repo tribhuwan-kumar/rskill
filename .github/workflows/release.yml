@@ -31,4 +31,4 @@ jobs:
               uses: softprops/action-gh-release@v1
               if: startsWith(github.ref, 'refs/tags/')
               with:
-                  files: "target/release/npkill-rs*"
+                  files: "target/release/rskill*"
